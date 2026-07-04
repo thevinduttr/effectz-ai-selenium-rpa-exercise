@@ -62,7 +62,7 @@ The botrunner will ask what to run:
 - `1` or `A` runs Task A only
 - `2` or `BOTH` runs Task A and Task B
 
-If Chrome is closed during the run, the botrunner starts Chrome again and runs the selected task again one time.
+If Chrome is closed or an unexpected browser/session error happens during the run, the botrunner closes that browser and starts Chrome again. The retry count is controlled by `execution.browser_restart_attempts` in `config/app_config.json`.
 
 ## How To Run
 

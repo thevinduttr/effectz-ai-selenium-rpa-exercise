@@ -43,6 +43,10 @@ class HomePage(BasePage):
         except TimeoutException:
             self.driver.get(f"{self.base_url}/search?q={quote_plus(keyword)}")
 
-        WebDriverWait(self.driver, self.timeout).until(
-            lambda d: "/search" in d.current_url or keyword.casefold() in d.page_source.casefold()
-        )
+        WebDriverWait(self.driver, self.timeout).until(lambda d: self._search_page_loaded(d, keyword))
+
+    @staticmethod
+    def _search_page_loaded(driver, keyword: str) -> bool:
+        current_url = driver.current_url or ""
+        page_source = driver.page_source or ""
+        return "/search" in current_url or keyword.casefold() in page_source.casefold()

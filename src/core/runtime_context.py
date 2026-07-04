@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from src.core.config_loader import PROJECT_ROOT
@@ -63,9 +64,13 @@ class ScreenshotManager:
         self.context = context
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def capture(self, name: str) -> Path:
+    def capture(self, name: str) -> Path | None:
         safe_name = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in name).strip("_")
         path = self.context.screenshot_dir / f"{safe_name}.png"
-        self.driver.save_screenshot(str(path))
-        self.logger.info("Screenshot captured: %s", path)
-        return path
+        try:
+            self.driver.save_screenshot(str(path))
+            self.logger.info("Screenshot captured: %s", path)
+            return path
+        except (OSError, WebDriverException) as exc:
+            self.logger.warning("Could not capture screenshot '%s': %s", name, exc)
+            return None

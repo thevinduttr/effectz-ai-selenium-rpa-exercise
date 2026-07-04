@@ -34,9 +34,6 @@ def normalize_task(task: str) -> str:
 
 
 def is_browser_closed_error(exc: Exception) -> bool:
-    if not isinstance(exc, WebDriverException):
-        return False
-
     message = str(exc).lower()
     closed_messages = (
         "invalid session id",
@@ -45,6 +42,7 @@ def is_browser_closed_error(exc: Exception) -> bool:
         "disconnected",
         "chrome not reachable",
         "web view not found",
+        "argument of type 'nonetype' is not a container or iterable",
     )
     return any(text in message for text in closed_messages)
 
@@ -64,6 +62,10 @@ def run_selected_task(task: str, app_config: dict, test_data: dict, context) -> 
         exit_code = printer.exit_code()
         logger.info("Run completed with exit_code=%s", exit_code)
         return exit_code
+    except Exception:
+        logger.exception("Selected task failed in this browser session.")
+        screenshots.capture("unexpected_error")
+        raise
     finally:
         try:
             driver.quit()
@@ -88,24 +90,39 @@ def main() -> int:
     if args.headless:
         app_config.setdefault("browser", {})["headless"] = True
 
-    restart_attempts = app_config.get("execution", {}).get("browser_restart_attempts", 1)
-    for attempt in range(restart_attempts + 1):
+    restart_attempts = int(app_config.get("execution", {}).get("browser_restart_attempts", 1))
+    total_attempts = restart_attempts + 1
+    last_error: Exception | None = None
+
+    for attempt in range(1, total_attempts + 1):
         try:
-            if attempt:
-                logger.info("Restarting Chrome and running selected task again. Attempt %s of %s.", attempt + 1, restart_attempts + 1)
+            if attempt > 1:
+                logger.info("Restarting Chrome and running selected task again. Attempt %s of %s.", attempt, total_attempts)
 
             exit_code = run_selected_task(task, app_config, test_data, context)
             logger.info("Log file available at: %s", context.log_file)
             logger.info("Screenshots available at: %s", context.screenshot_dir)
             return exit_code
         except Exception as exc:
-            if is_browser_closed_error(exc) and attempt < restart_attempts:
-                logger.warning("Chrome was closed or disconnected. Starting again...")
+            last_error = exc
+            if attempt < total_attempts:
+                if is_browser_closed_error(exc):
+                    logger.warning("Chrome was closed, disconnected, or returned an invalid browser state. Closing it and starting again...")
+                else:
+                    logger.warning(
+                        "Unexpected error on attempt %s/%s. Closing Chrome and starting again: %s",
+                        attempt,
+                        total_attempts,
+                        exc,
+                    )
                 continue
 
-            logger.exception("Run failed with unexpected error: %s", exc)
-            raise
+            logger.exception("Run failed after %s browser attempt(s): %s", total_attempts, exc)
+            logger.info("Log file available at: %s", context.log_file)
+            logger.info("Screenshots available at: %s", context.screenshot_dir)
+            return 1
 
+    logger.error("Run failed after %s browser attempt(s): %s", total_attempts, last_error)
     return 1
 
 
