@@ -1,0 +1,18 @@
+{
+  "shopping": {
+    "search_keywords": ["tee", "tank"]
+  },
+  "checkout": {
+    "email": "rathnaweerathevindu2003@gmail.com",
+    "email_news_and_offers": true,
+    "country": "Sri Lanka",
+    "country_code": "LK",
+    "first_name": "Thevindu",
+    "last_name": "Rathnaweera",
+    "address_line_1": "60 A , Sunandha Road",
+    "address_line_2": "",
+    "city": "Matara",
+    "postal_code": "81000",
+    "phone": "0714337912"
+  }
+}

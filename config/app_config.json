@@ -1,0 +1,26 @@
+{
+  "base_url": "https://incarnage.com",
+  "timeout_seconds": 20,
+  "browser": {
+    "name": "chrome",
+    "headless": false,
+    "window_width": 1440,
+    "window_height": 1200
+  },
+  "cart": {
+    "clear_before_run": true,
+    "expected_item_count": 2
+  },
+  "execution": {
+    "retry_product_candidates_per_keyword": 12,
+    "browser_restart_attempts": 2,
+    "stop_before_payment": true
+  },
+  "retry": {
+    "max_attempts": 3
+  },
+  "artifacts": {
+    "logs_dir": "logs",
+    "screenshots_dir": "screenshots"
+  }
+}
